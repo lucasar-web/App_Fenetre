@@ -75,20 +75,77 @@ class PdfExportService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('Récapitulatif des Châssis', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+        pw.Text('Récapitulatif des Châssis et Visuels', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
         pw.SizedBox(height: 10),
-        pw.TableHelper.fromTextArray(
-          context: null,
-          headers: ['Nom', 'Quantité', 'Largeur (mm)', 'Hauteur (mm)', 'Vitrage Spécifique'],
-          data: chantier.chassis.map((c) => [
-            c.nom,
-            c.quantite.toString(),
-            c.largeur.toString(),
-            c.hauteur.toString(),
-            c.vitrageOverride ?? '-',
-          ]).toList(),
+        pw.Wrap(
+          spacing: 20,
+          runSpacing: 20,
+          children: chantier.chassis.map((c) => _buildPdfChassisVisuel(c)).toList(),
         ),
       ],
+    );
+  }
+
+  static pw.Widget _buildPdfChassisVisuel(Chassis chassis) {
+    const double maxSize = 100.0;
+
+    if (chassis.hauteur == 0 || chassis.largeur == 0 || chassis.elements.isEmpty) {
+      return pw.Container(
+        width: maxSize,
+        height: maxSize + 20,
+        child: pw.Column(
+          children: [
+            pw.Text(chassis.nom, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text('${chassis.largeur} x ${chassis.hauteur} (${chassis.quantite}x)', style: const pw.TextStyle(fontSize: 10)),
+            pw.SizedBox(height: 10),
+            pw.Text('[Aucun élément dessiné]'),
+          ],
+        ),
+      );
+    }
+
+    double scale = maxSize / chassis.hauteur;
+    if (scale * chassis.largeur > maxSize) {
+      scale = maxSize / chassis.largeur;
+    }
+
+    final double scaledWidth = chassis.largeur * scale;
+    final double scaledHeight = chassis.hauteur * scale;
+
+    return pw.Container(
+      width: maxSize + 20,
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Text(chassis.nom, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.Text('${chassis.largeur} x ${chassis.hauteur} (${chassis.quantite}x)', style: const pw.TextStyle(fontSize: 10)),
+          if (chassis.vitrageOverride != null) pw.Text('Vitrage: ${chassis.vitrageOverride}', style: const pw.TextStyle(fontSize: 8)),
+          pw.SizedBox(height: 5),
+          pw.Container(
+            width: scaledWidth,
+            height: scaledHeight,
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.black, width: 1),
+            ),
+            child: pw.Stack(
+              children: chassis.elements.map((el) {
+                return pw.Positioned(
+                  left: el.x * scale,
+                  top: el.y * scale,
+                  width: el.largeur * scale,
+                  height: el.hauteur * scale,
+                  child: pw.Container(
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.brown800, width: 0.5),
+                      color: PdfColors.brown200,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

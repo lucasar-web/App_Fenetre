@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/chantier.dart';
 import '../providers/chantier_provider.dart';
 
@@ -16,6 +17,7 @@ class ChassisBuilderScreen extends StatefulWidget {
 class _ChassisBuilderScreenState extends State<ChassisBuilderScreen> {
   late List<ElementMenuiserie> _elements;
   final _uuid = const Uuid();
+  double _baseFontSize = 14.0;
 
   final List<String> _typesDisponibles = [
     'Montant', 'Traverse', 'Dormant', 'Ouvrant', 'Meneau', 'Petit bois', 'Panneau isolé', 'Moulure grand cadre'
@@ -26,6 +28,24 @@ class _ChassisBuilderScreenState extends State<ChassisBuilderScreen> {
     super.initState();
     // Créer une copie locale de la liste pour l'édition
     _elements = List.from(widget.chassis.elements);
+    _loadFontSize();
+  }
+
+  Future<void> _loadFontSize() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _baseFontSize = prefs.getDouble('builder_font_size') ?? 14.0;
+    });
+  }
+
+  Future<void> _changeFontSize(double delta) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _baseFontSize += delta;
+      if (_baseFontSize < 8.0) _baseFontSize = 8.0; // limite min
+      if (_baseFontSize > 40.0) _baseFontSize = 40.0; // limite max
+    });
+    await prefs.setDouble('builder_font_size', _baseFontSize);
   }
 
   void _sauvegarderChassis() {
@@ -86,6 +106,17 @@ class _ChassisBuilderScreenState extends State<ChassisBuilderScreen> {
       appBar: AppBar(
         title: Text('Construction : ${widget.chassis.nom} (${widget.chassis.largeur}x${widget.chassis.hauteur})'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.text_decrease),
+            onPressed: () => _changeFontSize(-2.0),
+            tooltip: 'Diminuer le texte',
+          ),
+          IconButton(
+            icon: const Icon(Icons.text_increase),
+            onPressed: () => _changeFontSize(2.0),
+            tooltip: 'Agrandir le texte',
+          ),
+          const SizedBox(width: 16),
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _sauvegarderChassis,
@@ -192,7 +223,7 @@ class _ChassisBuilderScreenState extends State<ChassisBuilderScreen> {
                                   onPanEnd: (details) {
                                     // Logique simple de Snapping
                                     setState(() {
-                                      double snapTolerance = 15.0; // Tolérance d'aimantation en mm
+                                      double snapTolerance = 30.0; // Tolérance d'aimantation augmentée
 
                                       // Points de snap du châssis global
                                       List<double> snapX = [0, widget.chassis.largeur / 2, widget.chassis.largeur];
@@ -237,7 +268,7 @@ class _ChassisBuilderScreenState extends State<ChassisBuilderScreen> {
                                       child: Text(
                                         el.type,
                                         style: TextStyle(
-                                          fontSize: 14 * scale, // Texte plus grand
+                                          fontSize: _baseFontSize * scale, // Texte dynamique sauvegardé
                                           fontWeight: FontWeight.bold,
                                           color: Colors.black87,
                                         ),
