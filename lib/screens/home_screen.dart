@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../models/chantier.dart';
@@ -45,15 +45,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _chargerChantier() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-        withData: true,
+      const XTypeGroup typeGroup = XTypeGroup(
+        label: 'fichiers JSON',
+        extensions: <String>['json'],
       );
 
-      if (result != null && result.files.single.bytes != null) {
-        // En lisant directement les bytes, on évite les problèmes de chemin de fichier, notamment sur le Web
-        String contents = utf8.decode(result.files.single.bytes!);
+      final XFile? file = await openFile(acceptedTypeGroups: <XTypeGroup>[typeGroup]);
+
+      if (file != null) {
+        // En lisant directement sous forme de string, cela gère toutes les plateformes proprement
+        String contents = await file.readAsString();
         Map<String, dynamic> json = jsonDecode(contents);
         Chantier chantier = Chantier.fromJson(json);
 
