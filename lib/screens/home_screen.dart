@@ -48,11 +48,12 @@ class _HomeScreenState extends State<HomeScreen> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
+        withData: true,
       );
 
-      if (result != null && result.files.single.path != null) {
-        File file = File(result.files.single.path!);
-        String contents = await file.readAsString();
+      if (result != null && result.files.single.bytes != null) {
+        // En lisant directement les bytes, on évite les problèmes de chemin de fichier, notamment sur le Web
+        String contents = utf8.decode(result.files.single.bytes!);
         Map<String, dynamic> json = jsonDecode(contents);
         Chantier chantier = Chantier.fromJson(json);
 
