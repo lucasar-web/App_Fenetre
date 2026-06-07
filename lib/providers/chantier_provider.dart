@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/chantier.dart';
-import '../services/user_service.dart';
-import 'chantier_detail_screen.dart';
 
 class ChantierProvider extends ChangeNotifier {
   Chantier? _chantierActuel;

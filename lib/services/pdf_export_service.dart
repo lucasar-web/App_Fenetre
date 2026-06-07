@@ -28,9 +28,8 @@ class PdfExportService {
 
     final Uint8List bytes = await pdf.save();
     await FileSaver.instance.saveFile(
-      name: 'Prod_${chantier.nom}_${DateTime.now().millisecondsSinceEpoch}',
+      name: 'Prod_${chantier.nom}_${DateTime.now().millisecondsSinceEpoch}.pdf',
       bytes: bytes,
-      ext: 'pdf',
       mimeType: MimeType.pdf,
     );
   }

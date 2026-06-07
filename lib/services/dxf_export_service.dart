@@ -28,9 +28,8 @@ class DxfExportService {
     final Uint8List bytes = Uint8List.fromList(utf8.encode(dxfContent));
 
     await FileSaver.instance.saveFile(
-      name: 'Chassis_${chassis.nom}_${DateTime.now().millisecondsSinceEpoch}',
+      name: 'Chassis_${chassis.nom}_${DateTime.now().millisecondsSinceEpoch}.dxf',
       bytes: bytes,
-      ext: 'dxf',
       mimeType: MimeType.text, // ou application/dxf
     );
   }

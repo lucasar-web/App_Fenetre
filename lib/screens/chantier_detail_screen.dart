@@ -88,9 +88,8 @@ class ChantierDetailScreen extends StatelessWidget {
                             Uint8List bytes = Uint8List.fromList(utf8.encode(jsonString));
 
                             await FileSaver.instance.saveFile(
-                              name: 'Chantier_${chantier.nom}_${DateTime.now().millisecondsSinceEpoch}',
+                              name: 'Chantier_${chantier.nom}_${DateTime.now().millisecondsSinceEpoch}.json',
                               bytes: bytes,
-                              ext: 'json',
                               mimeType: MimeType.json,
                             );
 
