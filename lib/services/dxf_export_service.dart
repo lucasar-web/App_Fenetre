@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'package:file_saver/file_saver.dart';
+import 'package:file_selector/file_selector.dart';
 import 'dart:convert';
 import '../models/chantier.dart';
 
@@ -27,11 +27,14 @@ class DxfExportService {
     final String dxfContent = buffer.toString();
     final Uint8List bytes = Uint8List.fromList(utf8.encode(dxfContent));
 
-    await FileSaver.instance.saveFile(
-      name: 'Chassis_${chassis.nom}_${DateTime.now().millisecondsSinceEpoch}.dxf',
-      bytes: bytes,
-      mimeType: MimeType.text, // ou application/dxf
+    final FileSaveLocation? saveLocation = await getSaveLocation(
+      suggestedName: 'Chassis_${chassis.nom}_${DateTime.now().millisecondsSinceEpoch}.dxf',
     );
+
+    if (saveLocation != null) {
+      final XFile xFile = XFile.fromData(bytes, mimeType: 'application/dxf');
+      await xFile.saveTo(saveLocation.path);
+    }
   }
 
   static void _drawRectangle(StringBuffer buffer, double x, double y, double width, double height) {

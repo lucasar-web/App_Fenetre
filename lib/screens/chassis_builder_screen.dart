@@ -189,21 +189,59 @@ class _ChassisBuilderScreenState extends State<ChassisBuilderScreen> {
                                     el.y += details.delta.dy / scale;
                                   });
                                 },
+                                  onPanEnd: (details) {
+                                    // Logique simple de Snapping
+                                    setState(() {
+                                      double snapTolerance = 15.0; // Tolérance d'aimantation en mm
+
+                                      // Points de snap du châssis global
+                                      List<double> snapX = [0, widget.chassis.largeur / 2, widget.chassis.largeur];
+                                      List<double> snapY = [0, widget.chassis.hauteur / 2, widget.chassis.hauteur];
+
+                                      // Points de snap des autres éléments
+                                      for (var autreEl in _elements) {
+                                        if (autreEl.id != el.id) {
+                                          snapX.addAll([autreEl.x, autreEl.x + autreEl.largeur]);
+                                          snapY.addAll([autreEl.y, autreEl.y + autreEl.hauteur]);
+                                        }
+                                      }
+
+                                      // Application de l'aimantation
+                                      for (double sx in snapX) {
+                                        if ((el.x - sx).abs() < snapTolerance) el.x = sx;
+                                        if ((el.x + el.largeur - sx).abs() < snapTolerance) el.x = sx - el.largeur;
+                                      }
+                                      for (double sy in snapY) {
+                                        if ((el.y - sy).abs() < snapTolerance) el.y = sy;
+                                        if ((el.y + el.hauteur - sy).abs() < snapTolerance) el.y = sy - el.hauteur;
+                                      }
+
+                                      // Empêcher de sortir du cadre
+                                      if (el.x < 0) el.x = 0;
+                                      if (el.y < 0) el.y = 0;
+                                      if (el.x + el.largeur > widget.chassis.largeur) el.x = widget.chassis.largeur - el.largeur;
+                                      if (el.y + el.hauteur > widget.chassis.hauteur) el.y = widget.chassis.hauteur - el.hauteur;
+                                    });
+                                  },
                                 onDoubleTap: () {
-                                  setState(() {
-                                    _elements.remove(el);
-                                  });
+                                  _montrerBulleAction(el);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.brown, width: 1),
+                                    border: Border.all(color: Colors.brown.shade800, width: 2),
                                     color: Colors.brown.shade200.withOpacity(0.8),
                                   ),
                                   child: Center(
-                                    child: Text(
-                                      el.type,
-                                      style: TextStyle(fontSize: 10 * scale, color: Colors.black),
-                                      overflow: TextOverflow.clip,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        el.type,
+                                        style: TextStyle(
+                                          fontSize: 14 * scale, // Texte plus grand
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -222,6 +260,64 @@ class _ChassisBuilderScreenState extends State<ChassisBuilderScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _montrerBulleAction(ElementMenuiserie el) {
+    final TextEditingController largeurController = TextEditingController(text: el.largeur.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Modifier ${el.type}'),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.red),
+                tooltip: 'Supprimer',
+                onPressed: () {
+                  setState(() {
+                    _elements.remove(el);
+                  });
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: largeurController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Largeur (mm)'),
+              ),
+              const SizedBox(height: 16),
+              const Text('Note : L\'adaptation automatique de la longueur (jusqu\'aux extrémités) sera implémentée dans une future version.', style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final nouvelleLargeur = double.tryParse(largeurController.text);
+                if (nouvelleLargeur != null && nouvelleLargeur > 0) {
+                  setState(() {
+                    el.largeur = nouvelleLargeur;
+                  });
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        );
+      },
     );
   }
 

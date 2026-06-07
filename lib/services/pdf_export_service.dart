@@ -1,12 +1,22 @@
 import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:file_saver/file_saver.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:printing/printing.dart';
 import '../models/chantier.dart';
 
 class PdfExportService {
   static Future<void> genererPdfProduction(Chantier chantier) async {
-    final pdf = pw.Document();
+    // Chargement d'une police supportant l'Unicode pour éviter l'erreur Helvetica
+    final font = await PdfGoogleFonts.robotoRegular();
+    final fontBold = await PdfGoogleFonts.robotoBold();
+
+    final pdf = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: font,
+        bold: fontBold,
+      ),
+    );
 
     pdf.addPage(
       pw.MultiPage(
@@ -27,11 +37,15 @@ class PdfExportService {
     );
 
     final Uint8List bytes = await pdf.save();
-    await FileSaver.instance.saveFile(
-      name: 'Prod_${chantier.nom}_${DateTime.now().millisecondsSinceEpoch}.pdf',
-      bytes: bytes,
-      mimeType: MimeType.pdf,
+
+    final FileSaveLocation? saveLocation = await getSaveLocation(
+      suggestedName: 'Prod_${chantier.nom}_${DateTime.now().millisecondsSinceEpoch}.pdf',
     );
+
+    if (saveLocation != null) {
+      final XFile xFile = XFile.fromData(bytes, mimeType: 'application/pdf');
+      await xFile.saveTo(saveLocation.path);
+    }
   }
 
   static pw.Widget _buildHeader(Chantier chantier) {

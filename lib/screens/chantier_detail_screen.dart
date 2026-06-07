@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import '../providers/chantier_provider.dart';
 import 'chassis_form_screen.dart';
 import 'dart:convert';
-import 'package:file_saver/file_saver.dart';
+import 'dart:io';
+import 'package:file_selector/file_selector.dart';
 import 'dart:typed_data';
 import 'chassis_builder_screen.dart';
 import '../services/pdf_export_service.dart';
 import '../services/dxf_export_service.dart';
+import '../widgets/chassis_miniature.dart';
 
 class ChantierDetailScreen extends StatelessWidget {
   const ChantierDetailScreen({super.key});
@@ -87,16 +89,19 @@ class ChantierDetailScreen extends StatelessWidget {
                             String jsonString = jsonEncode(chantier.toJson());
                             Uint8List bytes = Uint8List.fromList(utf8.encode(jsonString));
 
-                            await FileSaver.instance.saveFile(
-                              name: 'Chantier_${chantier.nom}_${DateTime.now().millisecondsSinceEpoch}.json',
-                              bytes: bytes,
-                              mimeType: MimeType.json,
+                            final FileSaveLocation? saveLocation = await getSaveLocation(
+                              suggestedName: 'Chantier_${chantier.nom}_${DateTime.now().millisecondsSinceEpoch}.json',
                             );
 
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Chantier sauvegardé avec succès')),
-                              );
+                            if (saveLocation != null) {
+                              final XFile xFile = XFile.fromData(bytes, mimeType: 'application/json');
+                              await xFile.saveTo(saveLocation.path);
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Chantier sauvegardé avec succès')),
+                                );
+                              }
                             }
                           } catch (e) {
                             if (context.mounted) {
@@ -144,7 +149,11 @@ class ChantierDetailScreen extends StatelessWidget {
                           return Card(
                             margin: const EdgeInsets.only(bottom: 16.0),
                             child: ListTile(
-                              leading: const Icon(Icons.window, color: Colors.green),
+                              leading: SizedBox(
+                                width: 60,
+                                height: 60,
+                                child: Center(child: ChassisMiniature(chassis: chassis)),
+                              ),
                               title: Text(chassis.nom, style: const TextStyle(fontWeight: FontWeight.bold)),
                               subtitle: Text('${chassis.quantite}x  -  ${chassis.largeur} x ${chassis.hauteur} mm'),
                               trailing: Row(
