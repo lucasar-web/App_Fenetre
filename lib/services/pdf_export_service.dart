@@ -125,10 +125,10 @@ class PdfExportService {
             width: scaledWidth,
             height: scaledHeight,
             decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: PdfColors.black, width: 1),
+              border: pw.Border.all(color: PdfColors.black),
             ),
             child: pw.Stack(
-              children: chassis.elements.map((el) {
+              children: chassis.elements.map<pw.Widget>((el) {
                 return pw.Positioned(
                   left: el.x * scale,
                   top: el.y * scale,
@@ -136,7 +136,7 @@ class PdfExportService {
                   height: el.hauteur * scale,
                   child: pw.Container(
                     decoration: pw.BoxDecoration(
-                      border: pw.Border.all(color: PdfColors.brown800, width: 0.5),
+                      border: pw.Border.all(color: PdfColors.brown800),
                       color: PdfColors.brown200,
                     ),
                   ),
